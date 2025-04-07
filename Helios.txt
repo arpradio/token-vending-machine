@@ -1,0 +1,114 @@
+// https://www.hyperion-bt.org/helios-playground/?share=48f5db05772c6c7f55452e4cd786ff67
+
+
+spending token_vending
+
+struct ShareHolder {
+    address: PubKeyHash
+    percentage: Int
+}
+
+struct TokenPrice {
+    asset_class: AssetClass
+    price_lovelace: Int
+}
+
+struct Datum {
+    token_prices: []TokenPrice
+    shareholders: []ShareHolder
+    nonce: Int
+    
+    func get_price(self, asset_class: AssetClass) -> Int {
+        self.token_prices.find((price: TokenPrice) -> Bool {
+            price.asset_class == asset_class
+        }).price_lovelace
+    }
+    
+    func validate_payment_distribution(self, tx: Tx) -> Bool {
+        self.shareholders.all((holder: ShareHolder) -> Bool {
+            percentage_amount: Int = holder.percentage;
+            expected_lovelace: Int = tx.outputs.fold((acc: Int, output: TxOutput) -> Int {
+                if (output.address.credential.switch {
+                    pk: PubKey => pk.hash == holder.address,
+                    _ => false
+                }) {
+                    acc
+                } else {
+                    acc + output.value.get_lovelace() * percentage_amount / 100
+                }
+            }, 0);
+            
+            tx.value_sent_to(holder.address).get_lovelace() >= expected_lovelace
+        })
+    }
+}
+
+enum Redeemer {
+    Buy {
+        buyer: PubKeyHash
+    }
+    Withdraw {
+        owner: PubKeyHash
+    }
+}
+
+func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
+    tx: Tx = ctx.tx;
+    
+    redeemer.switch {
+        b: Buy => {
+            script_address: ValidatorHash = ctx.get_current_validator_hash();
+            
+            purchased_assets: Value = tx.value_locked_by(script_address).get_assets();
+            
+            buyer_payment: Value = tx.value_sent_to(b.buyer);
+            
+            all_prices_correct: Bool = purchased_assets.to_map().fold((acc: Bool, mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                tokens.fold((inner_acc: Bool, token_name: ByteArray, amount: Int) -> Bool {
+                    asset: AssetClass = AssetClass::new(mph, token_name);
+                    price: Int = datum.get_price(asset);
+                    
+                    inner_acc && price * amount <= buyer_payment.get_lovelace()
+                }, acc)
+            }, true);
+            
+            datum.validate_payment_distribution(tx) && 
+            all_prices_correct &&
+            tx.is_signed_by(b.buyer)
+        },
+        w: Withdraw => {
+            tx.is_signed_by(w.owner) &&
+            datum.shareholders.any((holder: ShareHolder) -> Bool {
+                holder.address == w.owner
+            })
+        }
+    }
+}
+
+// Constants for testing (not included in the on-chain validator)
+const TOKEN_PRICES: []TokenPrice = []TokenPrice{
+    TokenPrice{
+        asset_class: AssetClass::new(
+            MintingPolicyHash::new(#896979c76895389789b1213bbc361c41273c53f298361a8e90bbae75),
+            #676a6b3b6c617364676a3b
+        ),
+        price_lovelace: 15000000
+    }
+}
+
+const SHAREHOLDERS: []ShareHolder = []ShareHolder{
+    ShareHolder{
+        address: PubKeyHash::new(#abf60f713030f441ea6a5d3c921a2fb8dafe9489a8fe75c29f698537),
+        percentage: 60
+    },
+    ShareHolder{
+        address: PubKeyHash::new(#abf60f713030f441ea6a5d3c921a2fb8dafe9489a8fe75c29f698537),
+        percentage: 40
+    }
+}
+
+const TEST_DATUM: Datum = Datum{
+    token_prices: TOKEN_PRICES,
+    shareholders: SHAREHOLDERS,
+    nonce: 12345
+}

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Token Vending Deposit</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#6d41a1" />
+    <script src="https://cdn.jsdelivr.net/npm/@gamechanger-finance/gc@0.1/dist/browser.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #6d41a1;
+            --secondary: #4c3175;
+            --background: #1e1e2e;
+            --card: #2a2a3f;
+            --text: #f5f5f7;
+            --error: #e53935;
+            --success: #43a047;
+            --input: #383851;
+            --button: #8250c8;
+            --button-hover: #9d6fe7;
+        }
+        
+        body {
+            background: var(--background);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            background: var(--card);
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--primary);
+            text-align: center;
+        }
+        
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            font-style: italic;
+            color: #b8b8c0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--input);
+            color: var(--text);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            box-shadow: 0 0 0 2px var(--primary);
+            outline: none;
+        }
+        
+        .flex-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            background: var(--button);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            background: var(--button-hover);
+        }
+        
+        .small-button {
+            font-size: 14px;
+            padding: 8px 15px;
+            margin-top: 0;
+            width: auto;
+        }
+        
+        .connect-button {
+            background: linear-gradient(45deg, var(--primary), var(--button));
+            padding: 20px;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .connect-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        .error-box {
+            background: rgba(229, 57, 53, 0.1);
+            border-left: 4px solid var(--error);
+            color: var(--error);
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .result-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow: auto;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: #a5e3ff;
+        }
+        
+        .encoders {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .encoder-option {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        
+        .encoder-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .encoder-active {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #b8b8c0;
+            font-size: 12px;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .percentage-total {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 14px;
+            color: #b8b8c0;
+        }
+        
+        .percentage-warning {
+            color: var(--error);
+        }
+        
+        .shareholders-container {
+            margin-top: 20px;
+        }
+        
+        .shareholder-item {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .delete-shareholder {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(229, 57, 53, 0.2);
+            color: var(--error);
+            border: none;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        
+        .delete-shareholder:hover {
+            background: rgba(229, 57, 53, 0.4);
+        }
+        
+        .shareholder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Token Vending Machine Deposit</h1>
+        <p class="description">Deposit your tokens into a vending machine contract with dynamic shareholders and a price</p>
+        
+        <form id="tokenForm">
+            <div class="form-grid">
+                <div>
+                    <div class="card">
+                        <div class="card-title">Token Information</div>
+                        <div class="form-group">
+                            <label for="policyId">Policy ID</label>
+                            <input type="text" id="policyId" required placeholder="e.g., 1ab0374dae940aeae63537500c0ff761381c10f83abdedf7d8d556f41a47f23">
+                        </div>
+                        <div class="form-group">
+                            <label for="tokenName">Token Name</label>
+                            <input type="text" id="tokenName" required placeholder="e.g., TestToken">
+                        </div>
+                        <div class="form-group">
+                            <label for="tokenQuantity">Token Quantity</label>
+                            <input type="number" id="tokenQuantity" required value="10" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="tokenPrice">Token Price (in ADA)</label>
+                            <input type="number" id="tokenPrice" required value="5" min="0.1" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <div class="card-title">Shareholder Distribution</div>
+                        <p>Total percentages must equal 100%.</p>
+                        
+                        <div class="shareholders-container" id="shareholdersContainer">
+                     
+                            <div class="shareholder-item" id="shareholder-0">
+                                <div class="shareholder-header">
+                                    <strong>Your Wallet (Shareholder 1)</strong>
+                                </div>
+                                <div class="form-group">
+                                    <label for="percentage-0">Your Percentage</label>
+                                    <input type="number" id="percentage-0" required value="100"  max="100" onchange="updateTotal()">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="addShareholderBtn" class="small-button">+ Add Shareholder</button>
+                        
+                        <div id="percentageTotal" class="percentage-total">
+                            Total: 100%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">Apply Settings</button>
+        </form>
+        
+        <div id="errorBox" class="error-box" style="display: none;"></div>
+        
+        <a href="#" id="connectButton" class="connect-button" style="display: block; text-align: center; text-decoration: none; color: white; margin-top: 20px;">
+            Loading...
+        </a>
+        
+        <div id="resultBox" class="result-box" style="display: none;"></div>
+        
+        <div class="encoders">
+            <div>Encoding:</div>
+            <div id="gzip" class="encoder-option encoder-active">gzip</div>
+            <div id="base64url" class="encoder-option">base64url</div>
+            <div id="json-url-lzma" class="encoder-option">json-url-lzma</div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated with GameChanger Wallet | <a href="https://beta-preprod-wallet.gamechanger.finance/playground" target="_blank">Playground IDE</a></p>
+            <div style="margin-top: 10px;">
+                <a href="https://twitter.com/GameChangerOk" target="_blank">Twitter</a> | 
+                <a href="https://discord.gg/vpbfyRaDKG" target="_blank">Discord</a> | 
+                <a href="https://www.youtube.com/@gamechanger.finance" target="_blank">YouTube</a> |
+                <a href="https://github.com/GameChangerFinance/gamechanger.wallet/" target="_blank">GitHub</a> |
+                <a href="https://gamechanger.finance" target="_blank">Website</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentEncoder = 'gzip';
+        let actionUrl = '';
+        let resultObj = null;
+        let shareholderCount = 1; // Start with your wallet as the first shareholder
+        
+        // Make functions globally accessible for inline event handlers
+        window.updateTotal = function() {
+            let total = 0;
+            
+            // Get all percentage inputs
+            for (let i = 0; i < shareholderCount; i++) {
+                const percentageInput = document.getElementById(`percentage-${i}`);
+                if (percentageInput) {
+                    total += parseInt(percentageInput.value) || 0;
+                }
+            }
+            
+            const totalElement = document.getElementById('percentageTotal');
+            
+            if (total === 100) {
+                totalElement.innerHTML = `Total: ${total}%`;
+                totalElement.classList.remove('percentage-warning');
+            } else {
+                totalElement.innerHTML = `Total: ${total}% (must be 100%)`;
+                totalElement.classList.add('percentage-warning');
+            }
+        };
+        
+        window.deleteShareholder = function(index) {
+            const shareholderElement = document.getElementById(`shareholder-${index}`);
+            if (shareholderElement) {
+                shareholderElement.remove();
+                reindexShareholders();
+                updateTotal();
+            }
+        };
+        
+        // DOM elements
+        const form = document.getElementById('tokenForm');
+        const errorBox = document.getElementById('errorBox');
+        const connectButton = document.getElementById('connectButton');
+        const resultBox = document.getElementById('resultBox');
+        const addShareholderBtn = document.getElementById('addShareholderBtn');
+        const shareholdersContainer = document.getElementById('shareholdersContainer');
+        
+        // Set up encoder options
+        document.getElementById('gzip').addEventListener('click', function() {
+            currentEncoder = 'gzip';
+            updateEncoderUI();
+            updateUI();
+        });
+        
+        document.getElementById('base64url').addEventListener('click', function() {
+            currentEncoder = 'base64url';
+            updateEncoderUI();
+            updateUI();
+        });
+        
+        document.getElementById('json-url-lzma').addEventListener('click', function() {
+            currentEncoder = 'json-url-lzma';
+            updateEncoderUI();
+            updateUI();
+        });
+        
+        function updateEncoderUI() {
+            document.querySelectorAll('.encoder-option').forEach(el => {
+                el.classList.remove('encoder-active');
+            });
+            document.getElementById(currentEncoder).classList.add('encoder-active');
+        }
+        
+        // Add new shareholder
+        addShareholderBtn.addEventListener('click', function() {
+            const index = shareholderCount;
+            
+            const newShareholderItem = document.createElement('div');
+            newShareholderItem.className = 'shareholder-item';
+            newShareholderItem.id = `shareholder-${index}`;
+            
+            newShareholderItem.innerHTML = `
+                <div class="shareholder-header">
+                    <strong>Shareholder ${index + 1}</strong>
+                    <button type="button" class="delete-shareholder" onclick="deleteShareholder(${index})">×</button>
+                </div>
+                <div class="form-group">
+                    <label for="address-${index}">Address (Public Key Hash)</label>
+                    <input type="text" id="address-${index}" required placeholder="Public key hash">
+                </div>
+                <div class="form-group">
+                    <label for="percentage-${index}">Percentage</label>
+                    <input type="number" id="percentage-${index}" required value="0" min="1" max="100" onchange="updateTotal()">
+                </div>
+            `;
+            
+            shareholdersContainer.appendChild(newShareholderItem);
+            shareholderCount++;
+            updateTotal();
+        });
+        
+        function reindexShareholders() {
+            // Starting from index 1 (since index 0 is your wallet)
+            let newIndex = 1;
+            const shareholders = document.querySelectorAll('.shareholder-item');
+            
+            shareholders.forEach((shareholder, i) => {
+                if (i === 0) return; // Skip the first one (your wallet)
+                
+                const oldIndex = shareholder.id.split('-')[1];
+                shareholder.id = `shareholder-${newIndex}`;
+                
+                // Update the title
+                const header = shareholder.querySelector('.shareholder-header strong');
+                if (header) header.textContent = `Shareholder ${newIndex + 1}`;
+                
+                // Update form input IDs and labels
+                const addressInput = shareholder.querySelector(`#address-${oldIndex}`);
+                const percentageInput = shareholder.querySelector(`#percentage-${oldIndex}`);
+                const addressLabel = shareholder.querySelector(`label[for="address-${oldIndex}"]`);
+                const percentageLabel = shareholder.querySelector(`label[for="percentage-${oldIndex}"]`);
+                
+                if (addressInput) {
+                    addressInput.id = `address-${newIndex}`;
+                    if (addressLabel) addressLabel.setAttribute('for', `address-${newIndex}`);
+                }
+                
+                if (percentageInput) {
+                    percentageInput.id = `percentage-${newIndex}`;
+                    if (percentageLabel) percentageLabel.setAttribute('for', `percentage-${newIndex}`);
+                }
+                
+                // Update delete button onclick
+                const deleteBtn = shareholder.querySelector('.delete-shareholder');
+                if (deleteBtn) {
+                    deleteBtn.setAttribute('onclick', `deleteShareholder(${newIndex})`);
+                }
+                
+                newIndex++;
+            });
+            
+            shareholderCount = newIndex;
+        }
+        
+        // Parse URL parameters to check for results
+        function parseURLResults() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const resultParam = urlParams.get('result');
+                
+                if (resultParam) {
+                    return resultParam;
+                }
+                return null;
+            } catch (error) {
+                console.error('Error parsing URL parameters:', error);
+                return null;
+            }
+        }
+        
+        function collectShareholders() {
+            const shareholders = [];
+            
+            // Get all shareholder data
+            for (let i = 0; i < shareholderCount; i++) {
+                const percentageInput = document.getElementById(`percentage-${i}`);
+                
+                if (i === 0) {
+                    // Your wallet is shareholder 0
+                    shareholders.push({
+                        index: i,
+                        address: null, // Will be filled with user's address
+                        percentage: parseInt(percentageInput.value) || 0
+                    });
+                } else {
+                    const addressInput = document.getElementById(`address-${i}`);
+                    if (addressInput && percentageInput) {
+                        shareholders.push({
+                            index: i,
+                            address: addressInput.value.trim(),
+                            percentage: parseInt(percentageInput.value) || 0
+                        });
+                    }
+                }
+            }
+            
+            return shareholders;
+        }
+        
+        // Generate shareholders object for Plutus datum
+        function generateShareholdersObject(shareholders) {
+            const shareholdersList = [];
+            
+            shareholders.forEach(shareholder => {
+                if (shareholder.index === 0) {
+                    // First shareholder is your wallet
+                    shareholdersList.push(`{
+                        "map": [
+                            {
+                                "k": {
+                                    "bytes": "address"
+                                },
+                                "v": {
+                                    "bytes": "{get('cache.dependencies.spendCredential.pubKeyHashHex')}"
+                                }
+                            },
+                            {
+                                "k": {
+                                    "bytes": "percentage"
+                                },
+                                "v": {
+                                    "int": ${shareholder.percentage}
+                                }
+                            }
+                        ]
+                    }`);
+                } else {
+                    // Other shareholders
+                    shareholdersList.push(`{
+                        "map": [
+                            {
+                                "k": {
+                                    "bytes": "address"
+                                },
+                                "v": {
+                                    "bytes": "${shareholder.address}"
+                                }
+                            },
+                            {
+                                "k": {
+                                    "bytes": "percentage"
+                                },
+                                "v": {
+                                    "int": ${shareholder.percentage}
+                                }
+                            }
+                        ]
+                    }`);
+                }
+            });
+            
+            return `[${shareholdersList.join(',')}]`;
+        }
+        
+        async function buildActionUrl() {
+            const { gc } = window;
+            const policyId = document.getElementById('policyId').value;
+            const tokenName = document.getElementById('tokenName').value;
+            const tokenQuantity = document.getElementById('tokenQuantity').value;
+            const tokenPrice = parseFloat(document.getElementById('tokenPrice').value) * 1000000; // Convert to lovelace
+            
+            const shareholders = collectShareholders();
+            
+            // Validate input
+            if (!policyId || !tokenName || !tokenQuantity) {
+                throw new Error("Policy ID, Token Name, and Token Quantity are required");
+            }
+            
+            // Validate addresses for all shareholders except your wallet
+            for (let i = 1; i < shareholders.length; i++) {
+                if (!shareholders[i].address || shareholders[i].address.length !== 56) {
+                    throw new Error(`Shareholder ${i+1} address is invalid. Public key hash should be 56 characters.`);
+                }
+            }
+            
+            // Validate shareholder percentages total 100%
+            const totalPercentage = shareholders.reduce((sum, sh) => sum + sh.percentage, 0);
+            if (totalPercentage !== 100) {
+                throw new Error(`Shareholder percentages must total 100%. Current total: ${totalPercentage}%`);
+            }
+            
+            // Generate GCScript with dynamic shareholders
+            const gcscript = {
+                "title": "Token Vending Deposit",
+                "description": "Deposits a token into the vending machine contract with dynamic shareholders and a price",
+                "type": "script",
+                "returnURLPattern": window.location.href,
+                "run": {
+                    "dependencies": {
+                        "type": "script",
+                        "run": {
+                            "stakeCredential": {
+                                "type": "getStakingPublicKey"
+                            },
+                            "spendCredential": {
+                                "type": "getSpendingPublicKey"
+                            },
+                            "currentAddress": {
+                                "type": "getCurrentAddress"
+                            },
+                            "addressInfo": {
+                                "type": "macro",
+                                "run": "{getAddressInfo(get('cache.dependencies.currentAddress'))}"
+                            },
+                            "smartContract": {
+                                "type": "plutusScript",
+                                "script": {
+                                    "lang": "plutus_v2",
+                                    "scriptHex": "590634590631010000323232323232323232323232222533357346464664a666ae68cdc3800a40002464646464a666ae694ccd5cd1919199800800801119191919199ab9a3371000200494128980d998090069bae357420066660326eb0d5d09aba2357446aae78dd5006112999ab9a323325333573466e1c0052000123371e6eb8d5d09aab9e37540026eb8d5d08038925035573a6ea8004004c8d5d09aab9e37540026ae84d55cf1baa001100213370000466e0ccdc1180e1bab357426ae88d55cf1baa00100348320052000375a6ae84d5d10009bac00122253335573e004294454ccd5cd18009aba10021333003003357440040022940dd61aba135744010200229404cc05801cdd71aba135573c6ea80145281919980a00191199119980c000911991192999ab9a00513371266e08004008c07802c528191bad357426ae88004c8c8cc004004008894ccd55cf8008b0992999ab9a3375e6ae84004cdd2a400066ae80dd480519aba0375200c97ae01001133003003357440046eb0d5d08009bac357420206eb8d55ce8009bad35573c0020086eb8d55ce8009bab35573c002002944cc028014dd71aba135573c6ea800cc8ccc0340048c8ccd5cd000a504a266e3cdd71aab9d0014881004bd6f7b6301806998058021192999ab9a3370e6aae74dd5000a4004266e3c00cc8dd71aba135573c6ea8004cc030005200214a0646ae84d55cf1baa001357426aae78dd5000991bae357426aae78dd50009919805000a4004646ae84d55cf1baa00132357426aae78dd5000991aba1357446aae78dd5000991919800800991bac357426aae78dd50009aba135573c6ea801c894ccd55cf8008b0992999ab9a3375e6ae84d55cf1baa0010041001133003003357440046ae84004c8d5d09aab9e37540026ae84d5d11aab9e375400a24a666ae68cc04800cdd71aba135573c6ea80044c8cc0500048c8cdc79bae357420026eb8d5d09aab9e37540086eb0004dd61aba1357440082940d55ce9baa004004357426aae78dd50011bac00314985888c018cc0100088c94ccd5cd19b8735573a6ea8005200013371e006646eb8d5d09aab9e37540026600a00290000a5032357426aae78dd50009aba135573c6ea8004894ccd5cd19b8735573a6ea800800440085888c8ccc0100040092f5c06eb0d5d09aba2357446aae78dd5001111191998008008020019112999aab9f0021004132533357346004002266ae80004ccc010010d5d100180109998020021aba200300235742004466600a0024464646660020026600e00800497adef6c6022253335573e00420022646464a666aae7c00440084cd5d019bb0003374c0020046644646660020026601c00600497adef6c6022253335573e00420022646464a666ae68cdc3800a40002004266ae80cdd80019ba8001002337006602600e0046602600c0046660080086ae8800c008d5d080119805004001198050030011998020021aba2003002357420046eacd5d09aba235573c6ea80052f5bded8c044646600200200644a666aae7c00452f5bded8c02a666ae68cdd79aab9d3574200200626eacd55cf1aba1001133002002357440024464646464666002002004008444a666aae7c00440084cd5d01aba100133300300300235744002666002002004006444a666aae7c00452f5c0264a666ae68cc0300148cdd780080109998020020019aba200213357400026660080080066ae88008d55ce9aba100132330010010032253335573e002297ae013357406aae74d5d0800998010011aba2001223233300100100300222253335573e004290000a999ab9a3375e6aae74d5d080100089bad35573c6ae840084ccc00c00cd5d1001000911191998008008020011112999aab9f00210011333003003357440046600a0026ae840088c8c8c8c8ccc004004894ccd55cf8008a40002a666ae68cdd79aab9d3574200200826eb4d55cf1aba10011330020023574400200a444a666aae7c0045200015333573466ebcd55ce9aba100100513300200237566aae78d5d080089998018018011aba2001357426ae88d55cf1baa002357426aae78dd5000a60106d8799f4040ff00223300337586ae84d5d11aba2357446ae88d5d11aba2357446ae88d55cf1baa00223375e0026ea400888c8ccc00400400c0088894ccd55cf8010a5015333573460026ae8400852889998018019aba200200101"
+                                }
+                            },
+                            "smartContractAddress": {
+                                "type": "buildAddress",
+                                "name": "vendingMachineAddress",
+                                "addr": {
+                                    "spendScriptHashHex": "{get('cache.dependencies.smartContract.scriptHashHex')}",
+                                    "stakePubKeyHashHex": "{get('cache.dependencies.stakeCredential.pubKeyHashHex')}"
+                                }
+                            }
+                        }
+                    },
+                    "createVendingDatum": {
+                        "type": "script",
+                        "run": {
+                            "policyId": {
+                                "type": "data",
+                                "value": policyId
+                            },
+                            "tokenName": {
+                                "type": "data",
+                                "value": tokenName
+                            },
+                            "tokenQuantity": {
+                                "type": "data",
+                                "value": tokenQuantity
+                            },
+                            "tokenPrice": {
+                                "type": "data",
+                                "value": tokenPrice.toString()
+                            },
+                            "generatedShareholders": {
+                                "type": "macro",
+                                "run": generateShareholdersObject(shareholders)
+                            },
+                            "vendingDatum": {
+                                "type": "plutusData",
+                                "data": {
+                                    "fromJSON": {
+                                        "schema": 1,
+                                        "obj": {
+                                            "list": [
+                                                {
+                                                    "list": [
+                                                        {
+                                                            "map": [
+                                                                {
+                                                                    "k": {
+                                                                        "bytes": "asset_class"
+                                                                    },
+                                                                    "v": {
+                                                                        "map": [
+                                                                            {
+                                                                                "k": {
+                                                                                    "bytes": "policy_id"
+                                                                                },
+                                                                                "v": {
+                                                                                    "bytes": "{get('cache.createVendingDatum.policyId')}"
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                "k": {
+                                                                                    "bytes": "token_name"
+                                                                                },
+                                                                                "v": {
+                                                                                    "bytes": "{strToHex(get('cache.createVendingDatum.tokenName'))}"
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "k": {
+                                                                        "bytes": "price_lovelace"
+                                                                    },
+                                                                    "v": {
+                                                                        "int": "{get('cache.createVendingDatum.tokenPrice')}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "list": "{get('cache.createVendingDatum.generatedShareholders')}"
+                                                },
+                                                {
+                                                    "int": 12345
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "buildDepositTx": {
+                        "type": "buildTx",
+                        "name": "built-vending-deposit",
+                        "tx": {
+                            "outputs": [
+                                {
+                                    "address": "{get('cache.dependencies.smartContractAddress')}",
+                                    "datum": {
+                                        "datumHex": "{get('cache.createVendingDatum.vendingDatum.dataHex')}"
+                                    },
+                                    "assets": [
+                                        {
+                                            "policyId": "{get('cache.createVendingDatum.policyId')}",
+                                            "assetName": "{get('cache.createVendingDatum.tokenName')}",
+                                            "quantity": "{get('cache.createVendingDatum.tokenQuantity')}"
+                                        },
+                                        {
+                                            "policyId": "ada",
+                                            "assetName": "ada",
+                                            "quantity": "2000000"
+                                        }
+                                    ],
+                                    "idPattern": "vendingOutput"
+                                }
+                            ],
+                            "requiredSigners": {
+                                "owner": "{get('cache.dependencies.spendCredential.pubKeyHashHex')}"
+                            }
+                        }
+                    },
+                    "signDepositTx": {
+                        "type": "signTxs",
+                        "namePattern": "signed-deposit",
+                        "txs": [
+                            "{get('cache.buildDepositTx.txHex')}"
+                        ],
+                        "detailedPermissions": false
+                    },
+                    "submitDepositTx": {
+                        "type": "submitTxs",
+                        "namePattern": "submitted-deposit",
+                        "txs": "{get('cache.signDepositTx')}"
+                    },
+                    "finally": {
+                        "type": "script",
+                        "exportAs": "TokenVendingDeposit",
+                        "run": {
+                            "contractDetails": {
+                                "type": "macro",
+                                "run": {
+                                    "smartContract": "{get('cache.dependencies.smartContract.scriptHashHex')}",
+                                    "contractAddress": "{get('cache.dependencies.smartContractAddress')}",
+                                    "policyId": "{get('cache.createVendingDatum.policyId')}",
+                                    "tokenName": "{get('cache.createVendingDatum.tokenName')}"
+                                }
+                            },
+                            "operations": {
+                                "type": "macro",
+                                "run": {
+                                    "depositTx": "{get('cache.submitDepositTx.0')}"
+                                }
+                            },
+                            "shareholders": {
+                                "type": "macro",
+                                "run": "{get('cache.createVendingDatum.generatedShareholders')}"
+                            },
+                            "tokenPrice": {
+                                "type": "macro",
+                                "run": "{get('cache.createVendingDatum.tokenPrice')} lovelace"
+                            },
+                            "datum": {
+                                "type": "macro",
+                                "run": "{get('cache.createVendingDatum.vendingDatum.dataHex')}"
+                            }
+                        }
+                    }
+                }
+            };
+            
+            return await gc.encode.url({
+                input: JSON.stringify(gcscript),
+                apiVersion: '2',
+                network: 'preprod',
+                encoding: currentEncoder
+            });
+        }
+        
+        async function updateUI() {
+            errorBox.style.display = 'none';
+            
+            try {
+                // Try to get action URL
+                actionUrl = await buildActionUrl();
+                connectButton.href = actionUrl;
+                connectButton.textContent = 'Connect with GameChanger Wallet';
+                
+                // Check for results in URL
+                const resultRaw = parseURLResults();
+                if (resultRaw) {
+                    const { gc } = window;
+                    resultObj = await gc.encodings.msg.decoder(resultRaw);
+                    
+                    if (resultObj) {
+                        resultBox.style.display = 'block';
+                        resultBox.textContent = JSON.stringify(resultObj, null, 2);
+                        
+                        // Clear URL parameters to avoid showing results again on refresh
+                        history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            } catch (error) {
+                errorBox.style.display = 'block';
+                errorBox.textContent = error.message || 'An error occurred';
+                connectButton.href = '#';
+                connectButton.textContent = 'Please fix the errors above';
+            }
+        }
+        
+        // Initialize the UI
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize percentage total display
+            updateTotal();
+            
+            // Add form submit event handler
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                await updateUI();
+            });
+            
+            // Initialize UI
+            await updateUI();
+        });
+    </script>
+</body>
+</html>
